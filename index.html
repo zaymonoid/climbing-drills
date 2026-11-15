@@ -23,7 +23,7 @@
   .list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--card)}
   .r{display:flex;gap:10px;padding:10px 12px;border-top:1px solid var(--border);min-height:22px;animation:enter .45s cubic-bezier(.34,1.56,.64,1) both}
   .r:first-child{border-top:0}
-  .r.has{cursor:pointer}
+  .r.land,.r.idle{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
   @keyframes enter{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}
   .r.hidden .c{border-style:dashed;color:var(--subtle-foreground);font-size:10px}
   .bar{height:10px;margin-top:4px;border-radius:999px;background:var(--muted);animation:shim 1.6s ease-in-out infinite}
@@ -45,7 +45,7 @@
   .b{font-size:12px;line-height:1.4;color:var(--muted-foreground);margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;animation:fade .3s .15s both}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   .r.open .b{-webkit-line-clamp:unset}
-  .x{font-size:11px;color:var(--subtle-foreground);align-self:center;transition:transform .2s}
+  .x{font-size:13px;color:var(--subtle-foreground);align-self:center;display:grid;place-items:center;width:40px;height:40px;margin:-11px -12px -11px -8px;border-radius:50%;cursor:pointer;transition:transform .2s}
   .r.open .x{transform:rotate(180deg)}
   button{font:inherit;font-size:13px;width:100%;padding:9px;border-radius:var(--radius);border:1px solid var(--border);background:var(--primary);color:var(--primary-foreground);cursor:pointer;display:flex;gap:6px;justify-content:center;align-items:center;transition:transform .15s,background .2s}
   button:active{transform:scale(.96)}
@@ -62,6 +62,7 @@
   <button id="go"></button>
 </div>
 <script>
+const N=5;
 const D=[
  {t:"Hover hands"},
  {t:"Toe screwing"},
@@ -74,7 +75,7 @@ const D=[
  {t:"One touch limit moves",g:"Spray wall",b:"No readjusting."},
  {t:"Deadpoint accuracy ladder",b:"Same deadpoint to a small hold, extending further each round by moving to lower feet or a worse starting hold. Then work backwards and do it as statically as you can. The aim is control."},
  {t:"Progressive hold removal"},
- {t:"Low gear traverse",g:"Steep wall",b:"Stay at the bottom of a steep wall and traverse side to side, using every handhold with small moves. Falling off is fine."},
+ {t:"Low gear traverse",g:"Spray wall",b:"Stay at the bottom of the spray wall and traverse side to side, using every handhold with small moves. Falling off is fine."},
  {t:"Low gear full extension",g:"Spray wall",b:"Feet low, climb until your hands are nearly at full reach. Hold it and move hands 1–2 more times, then bring feet up and repeat. Slow, no cutting loose, rest 2–3 min."},
  {t:"Max velocity deadpoints",g:"Board",b:"On a 35–45° board, start matched on a jug and drive with your legs to near-max span. Stop as soon as speed drops."},
 ];
@@ -84,23 +85,23 @@ const now=new Date();
 const day=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 function fnv(s){let h=0x811c9dc5;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,0x01000193)}return h>>>0}
 function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function todays(){const r=mulberry(fnv(day)),a=[...D];for(let i=a.length-1;i>0;i--){const j=r()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,4)}
+function todays(){const r=mulberry(fnv(day)),a=[...D];for(let i=a.length-1;i>0;i--){const j=r()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,N)}
 document.getElementById('d').textContent=now.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
 const inner=d=>{const long=d.b&&d.b.length>45;
-  return {long,html:`<div class="c">✓</div><div class="m"><div class="t">${d.t}${d.g?`<span class="g">${d.g}</span>`:''}</div>${d.b?`<div class="b">${d.b}</div>`:''}</div>${long?'<span class="x">▾</span>':''}`}};
+  return {long,html:`<div class="c">✓</div><div class="m"><div class="t">${d.t}${d.g?`<span class="g">${d.g}</span>`:''}</div>${d.b?`<div class="b">${d.b}</div>`:''}</div>${long?'<span class="x" aria-label="Show more">▾</span>':''}`}};
 function settle(row,d){const {long,html}=inner(d);row.className='r land'+(long?' has':'');row.innerHTML=html}
 function untilMidnight(){const m=new Date();m.setHours(24,0,0,0);const s=Math.max(0,(m-new Date())/1000|0);return `${s/3600|0}h ${(s%3600)/60|0}m`}
 let locked=false;
 function lock(){locked=true;btn.disabled=true;btn.classList.remove('spinning');btn.textContent=`New drills in ${untilMidnight()}`}
 function hidden(){
-  l.innerHTML=[0,1,2,3].map(i=>`<div class="r hidden" style="animation-delay:${i*60}ms"><div class="c">?</div><div class="m"><div class="bar" style="width:${[62,48,70,40][i]}%"></div></div></div>`).join('');
+  l.innerHTML=Array.from({length:N},(_,i)=>i).map(i=>`<div class="r hidden" style="animation-delay:${i*60}ms"><div class="c">?</div><div class="m"><div class="bar" style="width:${[62,48,70,40,55][i]}%"></div></div></div>`).join('');
   btn.innerHTML='<span class="ic">✦</span> Reveal today\'s drills';
 }
 function reveal(){
   btn.disabled=true;btn.classList.add('spinning');btn.innerHTML='<span class="ic">↻</span> Rolling…';
   const pick=todays();
   l.innerHTML=pick.map(()=>`<div class="r rolling" style="animation:none"><div class="c"></div><div class="m"><div class="t"></div></div></div>`).join('');
-  const rows=[...l.children];let left=4;
+  const rows=[...l.children];let left=N;
   pick.forEach((d,i)=>{
     const row=rows[i],t=row.querySelector('.t'),dur=reduce?0:550+i*260,start=performance.now();let last;
     const tick=()=>{
@@ -112,7 +113,7 @@ function reveal(){
     };tick();
   });
 }
-l.onclick=e=>{const r=e.target.closest('.r');if(!r||r.classList.contains('rolling')||r.classList.contains('hidden'))return;if(e.target.closest('.c'))r.classList.toggle('done');else if(r.classList.contains('has'))r.classList.toggle('open')};
+l.onclick=e=>{const r=e.target.closest('.r');if(!r||r.classList.contains('rolling')||r.classList.contains('hidden'))return;if(e.target.closest('.x'))r.classList.toggle('open');else r.classList.toggle('done')};
 btn.onclick=()=>{if(!btn.disabled)reveal()};
 setInterval(()=>{if(locked)btn.textContent=`New drills in ${untilMidnight()}`},30000);
 hidden();
